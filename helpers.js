@@ -4,15 +4,28 @@ import session from './.session.js'
 const CACHE = {}
 const URL = 'https://adventofcode.com/2020/day/$$/input'
 
-export async function fetchInput(day) {
+export async function fetchInput(day, {splitNewLine = true, splitBlankLine = false} = {}) {
   const url = URL.replace('$$', day)
 
-  if (CACHE[day]) return CACHE[day]
+  let data
+  if (CACHE[day]) {
+    data = CACHE[day]
+  } 
+  else {
+    const response = await got(url, {headers : { cookie: session}})
+    data = response.body
+    CACHE[day] = data
+  }
 
-  const response = await got(url, {headers : { cookie: session}})
-  CACHE[day] = response.body.split("\n").filter(l => !!l)
+  if (splitBlankLine) {
+    return data.split("\n\n").map(l => l.replace(/\n/gm, ' '))
+  }
 
-  return CACHE[day]
+  if (splitNewLine) {
+    return data.split("\n").filter(l => !!l)
+  }
+  
+  return data
 }
 
 export function parseInput(input, regexp, ...mapping) {
